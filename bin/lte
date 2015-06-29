@@ -1,0 +1,305 @@
+#!/usr/bin/env ruby
+
+require 'gtk3'
+require 'pp'
+
+require 'lte'
+
+## read command-line arguments (flags)
+
+class Flag
+	attr_reader :short, :long, :description, :action, :takes_value, :value_name
+
+	def self.gen_help_message(flags)
+		max_length = 8 + flags.collect { |f| f.short.length + f.long.length + f.value_name.length } .max
+
+		puts max_length
+
+		help = ""
+
+		help += "Usage: #$0 [Options...]\n"
+		help += "\n"
+		help += "Options:\n"
+
+		for f in flags
+			help += "  "
+			unless f.short.empty?
+				help += f.short
+			end
+			unless f.short.empty? or f.long.empty?
+				help += ", "
+			end
+			unless f.long.empty?
+				help += f.long
+			end
+			help += "=" + f.value_name if f.takes_value
+			help += " " * (max_length - help.lines.last.length)
+			help += f.description + "\n"
+		end
+
+		help
+	end
+
+	def self.process_all(args, flags)
+		for arg in args
+			break if arg == '--' # stop taking args after --
+
+			arg = arg.partition('=').first  # if arg is --arg=SOMETHING, take just the --arg part
+			
+			was_processed = false
+
+			for f in flags
+				was_processed ||= f.process(arg)
+			end
+
+			unless was_processed
+				$stderr.puts "#$PROGRAM_NAME: unknown argument '#{arg}' (#$PROGRAM_NAME --help for help}"
+				exit(-1)
+			end
+		end
+	end
+
+	
+	def initialize(short, long, description, action, takes_value = false, value_name = "")
+		if short.empty? and long.empty?
+			raise ArgumentException, "Either the short or long version of a flag must exist!"
+		end
+
+		@short       = short
+		@long        = long
+		@description = description
+		@action      = action
+		@takes_value = takes_value
+		@value_name  = value_name
+	end
+
+	def process(arg)
+		if arg == @short or arg == @long
+			if @takes_value
+				index = 0
+
+				ARGV.each_with_index { |a, i| index = i if a.start_with? arg }
+
+				if ARGV[index].include? '='
+					# call action with the part of arg after the '='
+					@action.call(ARGV[index].partition('=').last)
+				else
+					# call action with the arg after the one we're currently processing
+					@action.call(ARGV[index + 1])
+				end
+			else
+				@action.call
+			end
+
+			return true
+		else
+			return false
+		end
+	end
+end
+
+config = Config.new
+
+flags = []
+
+flags += [
+	Flag.new('',   '--config-dir', 'set config directory (default is $XDG_CONFIG_HOME/lte or ~/.config/lte)',                    lambda { |dir| config.config_dir = dir} , true, "CONFIG_DIR"),
+	Flag.new('-v', '--verbose',    'show more output',                                                                           lambda { config.verbose = true } ),
+	Flag.new('-h', '--help',       'show help',                                                                                  lambda { puts Flag.gen_help_message(flags); exit 0 } )
+]
+
+Flag.process_all(ARGV, flags)
+
+## start game
+
+class MainWindow
+	def initialize(config)
+		@config = config
+
+		Gtk.init
+
+		# load the config file, if it exists
+
+		@builder = Gtk::Builder::new
+		@builder.add_from_file(@config.resource_dir + '/lte.glade')
+		@builder.connect_signals do |handler|
+			method(handler)
+		end
+
+		@builder.get_object('main_window').show
+
+		Gtk.main
+	end
+
+	def update_player_stats
+		@builder.get_object('player_health_label').text = 'HP ' + @profile.player.max_health.to_s + ' / ' + @profile.player.health.to_s
+
+		health_bar = @builder.get_object 'player_health_levelbar'
+		health_bar.max_value = @profile.player.max_health
+		health_bar.value     = @profile.player.health
+
+		@builder.get_object('player_manna_label').text = 'MP ' + @profile.player.max_manna.to_s + ' / ' + @profile.player.manna.to_s
+
+		manna_bar = @builder.get_object 'player_manna_levelbar'
+		manna_bar.max_value = @profile.player.max_manna
+		manna_bar.value     = @profile.player.manna
+
+		@builder.get_object('player_armor_value').text = @profile.player.armor.to_s
+
+		@builder.get_object('player_damage_value').text = @profile.player.armor.to_s
+	end
+
+	def save_profile
+		throw "save_profile(): @profile and @profile_file need to be defined!" if @profile.nil? or @profile_file.nil?
+
+		File.open(@profile_file, 'w') do |pfile|
+			Marshal.dump(@profile, pfile)
+			puts "Dumped profile into #@profile_file"
+		end
+	end
+
+	def load_profile
+		throw "load_profile(): @profile_file needs to be defined!" if @profile_file.nil?
+
+		File.open(@profile_file, 'r') do |pfile|
+			@profile = Marshal.load(pfile)
+			puts "Loaded profile from #@profile_file"
+		end
+	end
+
+	# generic callbacks
+	
+	def gtk_main_quit
+		Gtk.main_quit
+	end
+
+	def gtk_widget_show(widget, event)
+		widget.hide
+	end
+
+	def gtk_widget_hide(widget, event)
+		widget.hide
+	end
+
+	# specific callbacks
+	
+	## menu items
+	
+	def on_profile_new_menuitem_activate
+		player = Player.new("Generic Player", "A perfectly generic player character")
+
+		@profile = Profile.new(player)
+	end
+
+	def on_profile_open_menuitem_activate
+		@builder.get_object('profile_open_filechooser_dialog').show
+	end
+
+	def on_profile_save_menuitem_activate
+		if @profile
+			if @profile_file
+				save_profile
+			else
+				@builder.get_object('profile_save_filechooser_dialog').show
+			end
+		else
+			@builder.get_object('no_profile_dialog').show
+		end
+	end
+
+	def on_profile_save_as_menuitem_activate
+		if @profile
+			@builder.get_object('profile_save_filechooser_dialog').show
+		else
+			@builder.get_object('no_profile_dialog').show
+		end
+	end
+
+	def on_profile_inspect_menuitem_activate
+		@builder.get_object('profile_inspect_label').text = @profile.pretty_inspect
+		@builder.get_object('profile_inspect_dialog').show
+	end
+
+	def on_content_load_menuitem_activate
+		@builder.get_object('content_load_filechooser_dialog').show
+	end
+
+	def on_help_about_menuitem_activate
+		@builder.get_object('about_dialog').show
+	end
+
+	## profile open filechooser
+	
+	def on_profile_open_filechooser_dialog_show(widget)
+		if @profile_file
+			widget.filename = File.dirname(@profile_file)
+		else
+			widget.current_folder = @config.config_dir + '/profiles/'
+		end
+	end
+
+	def on_profile_open_filechooser_dialog_response(dialog, response)
+		if response == Gtk::ResponseType::CANCEL
+			dialog.hide
+		elsif response == Gtk::ResponseType::ACCEPT
+			dialog.hide
+			@profile_file = dialog.filename
+			load_profile
+		end
+	end
+
+	## profile save filechooser
+
+	def on_profile_save_filechooser_dialog_show(widget)
+		if @profile_file
+			widget.filename = File.dirname(@profile_file)
+		else
+			widget.current_folder = @config.config_dir + '/profiles/'
+			widget.current_name   = "#{@profile.player.name.downcase.gsub(' ', '_')}.dat"
+		end
+	end
+
+	def on_profile_save_filechooser_dialog_response(dialog, response)
+		if response == Gtk::ResponseType::CANCEL
+			dialog.hide
+		elsif response == Gtk::ResponseType::ACCEPT
+			@profile_file = dialog.filename
+			dialog.hide
+
+			save_profile
+		end
+	end
+
+	## content load filechooser
+	
+	def on_content_load_filechooser_dialog_show(widget)
+		widget.current_folder = @config.config_dir
+	end
+
+	def on_content_load_filechooser_dialog_response(dialog, response)
+		if response == Gtk::ResponseType::CANCEL
+			dialog.hide
+		elsif response == Gtk::ResponseType::ACCEPT
+			load dialog.filename
+			dialog.hide
+		end
+	end
+
+	## no profile dialog
+	
+	def on_no_profile_dialog_response(dialog, response_event)
+		if response_event == Gtk::ResponseType::OK
+			dialog.hide
+		end
+	end
+
+	## profile inspect dialog
+	
+	def on_profile_inspect_dialog_response(dialog, response_event)
+		if response_event == Gtk::ResponseType::OK
+			dialog.hide
+		end
+	end
+end
+
+window = MainWindow.new(config)
