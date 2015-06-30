@@ -1,30 +1,38 @@
 require 'lte/character'
 require 'lte/event'
 
-class Config
-	attr_accessor :config_dir, :resource_dir, :verbose
+module LTE
+	class Config
+		attr_accessor :config_dir, :resource_dir, :verbose
 
-	def initialize
-		@config_dir   = (ENV['XDG_CONFIG_HOME'].chomp('/') || File.expand_path('~/.config')) + '/lte'
-		@resource_dir = File.expand_path('../../resources', File.dirname(__FILE__))
-		@verbose = false
+		def initialize
+			@config_dir   = (ENV['XDG_CONFIG_HOME'].chomp('/') || File.expand_path('~/.config')) + '/lte'
+			@resource_dir = File.expand_path('../../resources', File.dirname(__FILE__))
+			@verbose = false
+		end
 	end
-end
 
-class Player < Character
-	attr_accessor :location
+	class Profile
+		attr_reader :player
 
-	def initialize(name, description = '')
-		super(name, description)
+		def initialize player
+			@player = player
 
-		@location = nil
+			@already_loaded = ""
+		end
 	end
-end
 
-class Profile
-	attr_reader :player
+	class ProfileMod
+		attr_reader
 
-	def initialize player
-		@player = player
+		def initialize(name, depends, modify_lambda)
+			@name          = name
+			@depends       = depends
+			@modify_lambda = modify_lambda
+		end
+
+		def modify(profile)
+			   @modify_lambda.call(profile)
+		end
 	end
 end
