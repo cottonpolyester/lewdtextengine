@@ -1,5 +1,6 @@
 require 'lte/character'
-require 'lte/core'
+require 'lte/commandline'
+require 'lte/config'
 require 'lte/event'
 require 'lte/location'
-require 'lte/commandline'
+require 'lte/profile'
