@@ -16,70 +16,70 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkMenuItem" id="profile_menuitem">
+              <object class="GtkMenuItem" id="game_menuitem">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">_Profile</property>
+                <property name="label" translatable="yes">_Game</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
-                  <object class="GtkMenu" id="profile_menu">
+                  <object class="GtkMenu" id="game_menu">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuItem" id="profile_new_menuitem">
+                      <object class="GtkMenuItem" id="game_new_menuitem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">New</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_profile_new_menuitem_activate" swapped="no"/>
+                        <signal name="activate" handler="on_game_new_menuitem_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="profile_open_menuitem">
+                      <object class="GtkMenuItem" id="game_open_menuitem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Open</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_profile_open_menuitem_activate" swapped="no"/>
+                        <signal name="activate" handler="on_game_open_menuitem_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkSeparatorMenuItem" id="profile_menu_separatoritem1">
+                      <object class="GtkSeparatorMenuItem" id="game_menu_separatoritem1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="profile_save_menuitem">
+                      <object class="GtkMenuItem" id="game_save_menuitem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Save</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_profile_save_menuitem_activate" swapped="no"/>
+                        <signal name="activate" handler="on_game_save_menuitem_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="profile_save_as_menuitem">
+                      <object class="GtkMenuItem" id="game_save_as_menuitem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Save As</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_profile_save_as_menuitem_activate" swapped="no"/>
+                        <signal name="activate" handler="on_game_save_as_menuitem_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkSeparatorMenuItem" id="profile_menu_separatoritem2">
+                      <object class="GtkSeparatorMenuItem" id="game_menu_separatoritem2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="profile_inspect_menuitem">
+                      <object class="GtkMenuItem" id="game_inspect_menuitem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Inspect</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_profile_inspect_menuitem_activate" swapped="no"/>
+                        <signal name="activate" handler="on_game_inspect_menuitem_activate" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -506,7 +506,7 @@
       <action-widget response="-3">content_load_filechooser_save_button</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkDialog" id="no_profile_dialog">
+  <object class="GtkDialog" id="no_player_dialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">LTG - No Profile</property>
     <property name="window_position">center-on-parent</property>
@@ -515,18 +515,18 @@
     <property name="type_hint">dialog</property>
     <property name="transient_for">main_window</property>
     <signal name="delete-event" handler="gtk_widget_hide" swapped="no"/>
-    <signal name="response" handler="on_no_profile_dialog_response" swapped="no"/>
+    <signal name="response" handler="on_no_player_dialog_response" swapped="no"/>
     <child internal-child="vbox">
-      <object class="GtkBox" id="no_profile_vbox">
+      <object class="GtkBox" id="no_player_vbox">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="no_profile_action_area">
+          <object class="GtkButtonBox" id="no_player_action_area">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="no_profile_okay_button">
+              <object class="GtkButton" id="no_player_okay_button">
                 <property name="label" translatable="yes">Okay</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -548,10 +548,10 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="no_profile_label">
+          <object class="GtkLabel" id="no_player_label">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">You don't have a profile! You'll have to create a new one or open one before you can save it.</property>
+            <property name="label" translatable="yes">You don't have a player! You'll have to create a new one or open one before you can save it.</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -563,27 +563,27 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-5">no_profile_okay_button</action-widget>
+      <action-widget response="-5">no_player_okay_button</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkDialog" id="profile_inspect_dialog">
+  <object class="GtkDialog" id="player_inspect_dialog">
     <property name="can_focus">False</property>
     <property name="window_position">center-on-parent</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">main_window</property>
     <signal name="delete-event" handler="gtk_widget_hide" swapped="no"/>
-    <signal name="response" handler="on_profile_inspect_dialog_response" swapped="no"/>
+    <signal name="response" handler="on_player_inspect_dialog_response" swapped="no"/>
     <child internal-child="vbox">
-      <object class="GtkBox" id="profile_inspect_dialog_vbox">
+      <object class="GtkBox" id="player_inspect_dialog_vbox">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="profile_inspect_dialog_action_area">
+          <object class="GtkButtonBox" id="player_inspect_dialog_action_area">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="profile_inspect_ok_button">
+              <object class="GtkButton" id="player_inspect_ok_button">
                 <property name="label" translatable="yes">Okay</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -603,7 +603,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="profile_inspect_label">
+          <object class="GtkLabel" id="player_inspect_label">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
           </object>
@@ -617,10 +617,10 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-5">profile_inspect_ok_button</action-widget>
+      <action-widget response="-5">player_inspect_ok_button</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkFileChooserDialog" id="profile_open_filechooser_dialog">
+  <object class="GtkFileChooserDialog" id="player_open_filechooser_dialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Lewd Text Game - Open Profile</property>
     <property name="window_position">center-on-parent</property>
@@ -629,19 +629,19 @@
     <property name="transient_for">main_window</property>
     <property name="do_overwrite_confirmation">True</property>
     <signal name="delete-event" handler="gtk_widget_hide" swapped="no"/>
-    <signal name="response" handler="on_profile_open_filechooser_dialog_response" swapped="no"/>
-    <signal name="show" handler="on_profile_open_filechooser_dialog_show" swapped="no"/>
+    <signal name="response" handler="on_player_open_filechooser_dialog_response" swapped="no"/>
+    <signal name="show" handler="on_player_open_filechooser_dialog_show" swapped="no"/>
     <child internal-child="vbox">
-      <object class="GtkBox" id="profile_open_filechooser_vbox">
+      <object class="GtkBox" id="player_open_filechooser_vbox">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="profile_open_filechooser_action_area">
+          <object class="GtkButtonBox" id="player_open_filechooser_action_area">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="profile_open_filechooser_cancel_button">
+              <object class="GtkButton" id="player_open_filechooser_cancel_button">
                 <property name="label" translatable="yes">Cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -657,7 +657,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="profile_open_filechooser_save_button">
+              <object class="GtkButton" id="player_open_filechooser_save_button">
                 <property name="label" translatable="yes">Open</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -682,11 +682,11 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">profile_open_filechooser_cancel_button</action-widget>
-      <action-widget response="-3">profile_open_filechooser_save_button</action-widget>
+      <action-widget response="-6">player_open_filechooser_cancel_button</action-widget>
+      <action-widget response="-3">player_open_filechooser_save_button</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkFileChooserDialog" id="profile_save_filechooser_dialog">
+  <object class="GtkFileChooserDialog" id="player_save_filechooser_dialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Lewd Text Game - Save Profile As</property>
     <property name="window_position">center-on-parent</property>
@@ -696,19 +696,19 @@
     <property name="action">save</property>
     <property name="do_overwrite_confirmation">True</property>
     <signal name="delete-event" handler="gtk_widget_hide" swapped="no"/>
-    <signal name="response" handler="on_profile_save_filechooser_dialog_response" swapped="no"/>
-    <signal name="show" handler="on_profile_save_filechooser_dialog_show" swapped="no"/>
+    <signal name="response" handler="on_player_save_filechooser_dialog_response" swapped="no"/>
+    <signal name="show" handler="on_player_save_filechooser_dialog_show" swapped="no"/>
     <child internal-child="vbox">
-      <object class="GtkBox" id="profile_save_filechooser_vbox">
+      <object class="GtkBox" id="player_save_filechooser_vbox">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="profile_save_filechooser_action_area">
+          <object class="GtkButtonBox" id="player_save_filechooser_action_area">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="profile_save_filechooser_cancel_button">
+              <object class="GtkButton" id="player_save_filechooser_cancel_button">
                 <property name="label" translatable="yes">Cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -724,7 +724,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="profile_save_filechooser_save_button">
+              <object class="GtkButton" id="player_save_filechooser_save_button">
                 <property name="label" translatable="yes">Save</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -749,8 +749,8 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">profile_save_filechooser_cancel_button</action-widget>
-      <action-widget response="-3">profile_save_filechooser_save_button</action-widget>
+      <action-widget response="-6">player_save_filechooser_cancel_button</action-widget>
+      <action-widget response="-3">player_save_filechooser_save_button</action-widget>
     </action-widgets>
   </object>
 </interface>

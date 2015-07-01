@@ -25,52 +25,54 @@ class MainWindow
 
 		Gtk.init
 
-		# load the config file, if it exists
-
 		@builder = Gtk::Builder::new
 		@builder.add_from_file(@config.resource_dir + '/lte.glade')
-		@builder.connect_signals do |handler|
-			method(handler)
-		end
+		@builder.connect_signals { |handler| method(handler) }
 
 		@builder.get_object('main_window').show
 
 		Gtk.main
 	end
 
-	def update_player_stats
-		@builder.get_object('player_health_label').text = 'HP ' + @profile.player.max_health.to_s + ' / ' + @profile.player.health.to_s
+	def start_game
+		update_player_stats
 
-		health_bar = @builder.get_object 'player_health_levelbar'
-		health_bar.max_value = @profile.player.max_health
-		health_bar.value     = @profile.player.health
-
-		@builder.get_object('player_manna_label').text = 'MP ' + @profile.player.max_manna.to_s + ' / ' + @profile.player.manna.to_s
-
-		manna_bar = @builder.get_object 'player_manna_levelbar'
-		manna_bar.max_value = @profile.player.max_manna
-		manna_bar.value     = @profile.player.manna
-
-		@builder.get_object('player_armor_value').text = @profile.player.armor.to_s
-
-		@builder.get_object('player_damage_value').text = @profile.player.armor.to_s
+		@builder.get_object('content_label').text = "Hello world!"
 	end
 
-	def save_profile
-		throw "save_profile(): @profile and @profile_file need to be defined!" if @profile.nil? or @profile_file.nil?
+	def update_player_stats
+		@builder.get_object('battle_stats_health_label').text = 'HP ' + @player.max_health.to_s + ' / ' + @player.health.to_s
 
-		File.open(@profile_file, 'w') do |pfile|
-			Marshal.dump(@profile, pfile)
-			puts "Dumped profile into #@profile_file"
+		health_bar = @builder.get_object 'battle_stats_health_levelbar'
+		health_bar.max_value = @player.max_health
+		health_bar.value     = @player.health
+
+		@builder.get_object('battle_stats_manna_label').text = 'MP ' + @player.max_manna.to_s + ' / ' + @player.manna.to_s
+
+		manna_bar = @builder.get_object 'battle_stats_manna_levelbar'
+		manna_bar.max_value = @player.max_manna
+		manna_bar.value     = @player.manna
+
+		@builder.get_object('battle_stats_armor_value').text = @player.armor.to_s
+
+		@builder.get_object('battle_stats_damage_value').text = @player.armor.to_s
+	end
+
+	def save_game
+		throw "MainWindow.save_game(): @player and @player_file need to be defined!" if @player.nil? or @player_file.nil?
+
+		File.open(@player_file, 'w') do |pfile|
+			Marshal.dump(@player, pfile)
+			puts "Dumped player object into #@player_file"
 		end
 	end
 
-	def load_profile
-		throw "load_profile(): @profile_file needs to be defined!" if @profile_file.nil?
+	def load_game
+		throw "MainWindow.load_game(): @player_file needs to be defined!" if @player_file.nil?
 
-		File.open(@profile_file, 'r') do |pfile|
-			@profile = Marshal.load(pfile)
-			puts "Loaded profile from #@profile_file"
+		File.open(@player_file, 'r') do |pfile|
+			@player = Marshal.load(pfile)
+			puts "Loaded player object from #@player_file"
 		end
 	end
 
@@ -92,39 +94,41 @@ class MainWindow
 	
 	## menu items
 	
-	def on_profile_new_menuitem_activate
-		player = LTE::Player.new("Generic Player", "A perfectly generic player character")
+	def on_game_new_menuitem_activate
+		@player = LTE::Player.new("Generic Player", "A perfectly generic player character")
 
-		@profile = LTE::Profile.new(player)
+		start_game
 	end
 
-	def on_profile_open_menuitem_activate
-		@builder.get_object('profile_open_filechooser_dialog').show
+	def on_game_open_menuitem_activate
+		@builder.get_object('player_open_filechooser_dialog').show
+
+		start_game
 	end
 
-	def on_profile_save_menuitem_activate
-		if @profile
-			if @profile_file
-				save_profile
+	def on_game_save_menuitem_activate
+		if @player
+			if @player_file
+				save_player
 			else
-				@builder.get_object('profile_save_filechooser_dialog').show
+				@builder.get_object('player_save_filechooser_dialog').show
 			end
 		else
-			@builder.get_object('no_profile_dialog').show
+			@builder.get_object('no_player_dialog').show
 		end
 	end
 
-	def on_profile_save_as_menuitem_activate
-		if @profile
-			@builder.get_object('profile_save_filechooser_dialog').show
+	def on_game_save_as_menuitem_activate
+		if @player
+			@builder.get_object('player_save_filechooser_dialog').show
 		else
-			@builder.get_object('no_profile_dialog').show
+			@builder.get_object('no_player_dialog').show
 		end
 	end
 
-	def on_profile_inspect_menuitem_activate
-		@builder.get_object('profile_inspect_label').text = @profile.pretty_inspect
-		@builder.get_object('profile_inspect_dialog').show
+	def on_game_inspect_menuitem_activate
+		@builder.get_object('player_inspect_label').text = @player.pretty_inspect
+		@builder.get_object('player_inspect_dialog').show
 	end
 
 	def on_content_load_menuitem_activate
@@ -135,45 +139,45 @@ class MainWindow
 		@builder.get_object('about_dialog').show
 	end
 
-	## profile open filechooser
+	## player open filechooser
 	
-	def on_profile_open_filechooser_dialog_show(widget)
-		if @profile_file
-			widget.filename = File.dirname(@profile_file)
+	def on_player_open_filechooser_dialog_show(widget)
+		if @player_file
+			widget.filename = File.dirname(@player_file)
 		else
-			widget.current_folder = @config.config_dir + '/profiles/'
+			widget.current_folder = @config.config_dir + '/saves/'
 		end
 	end
 
-	def on_profile_open_filechooser_dialog_response(dialog, response)
+	def on_player_open_filechooser_dialog_response(dialog, response)
 		if response == Gtk::ResponseType::CANCEL
 			dialog.hide
 		elsif response == Gtk::ResponseType::ACCEPT
 			dialog.hide
-			@profile_file = dialog.filename
-			load_profile
+			@player_file = dialog.filename
+			load_player
 		end
 	end
 
-	## profile save filechooser
+	## player save filechooser
 
-	def on_profile_save_filechooser_dialog_show(widget)
-		if @profile_file
-			widget.filename = File.dirname(@profile_file)
+	def on_player_save_filechooser_dialog_show(widget)
+		if @player_file
+			widget.filename = File.dirname(@player_file)
 		else
-			widget.current_folder = @config.config_dir + '/profiles/'
-			widget.current_name   = "#{@profile.player.name.downcase.gsub(' ', '_')}.dat"
+			widget.current_folder = @config.config_dir + '/players/'
+			widget.current_name   = "#{@player.name.downcase.gsub(' ', '_')}.dat"
 		end
 	end
 
-	def on_profile_save_filechooser_dialog_response(dialog, response)
+	def on_player_save_filechooser_dialog_response(dialog, response)
 		if response == Gtk::ResponseType::CANCEL
 			dialog.hide
 		elsif response == Gtk::ResponseType::ACCEPT
-			@profile_file = dialog.filename
+			@player_file = dialog.filename
 			dialog.hide
 
-			save_profile
+			save_player
 		end
 	end
 
@@ -192,17 +196,17 @@ class MainWindow
 		end
 	end
 
-	## no profile dialog
+	## no player dialog
 	
-	def on_no_profile_dialog_response(dialog, response_event)
+	def on_no_player_dialog_response(dialog, response_event)
 		if response_event == Gtk::ResponseType::OK
 			dialog.hide
 		end
 	end
 
-	## profile inspect dialog
+	## player inspect dialog
 	
-	def on_profile_inspect_dialog_response(dialog, response_event)
+	def on_player_inspect_dialog_response(dialog, response_event)
 		if response_event == Gtk::ResponseType::OK
 			dialog.hide
 		end
