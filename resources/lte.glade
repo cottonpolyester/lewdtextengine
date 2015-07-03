@@ -4,7 +4,7 @@
   <requires lib="gtk+" version="3.12"/>
   <object class="GtkWindow" id="main_window">
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">Lewd Text Game</property>
+    <property name="title" translatable="yes">Lewd Text Engine</property>
     <signal name="destroy" handler="gtk_main_quit" swapped="no"/>
     <child>
       <object class="GtkBox" id="main_box">
@@ -403,7 +403,7 @@
   </object>
   <object class="GtkAboutDialog" id="about_dialog">
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">Lewd Text Game - About</property>
+    <property name="title" translatable="yes">LTE - About</property>
     <property name="modal">True</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
@@ -442,7 +442,7 @@
   </object>
   <object class="GtkFileChooserDialog" id="content_load_filechooser_dialog">
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">Lewd Text Game - Open Content</property>
+    <property name="title" translatable="yes">LTE - Open Content</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
@@ -508,7 +508,7 @@
   </object>
   <object class="GtkDialog" id="no_player_dialog">
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">LTG - No Profile</property>
+    <property name="title" translatable="yes">LTE - No Profile</property>
     <property name="window_position">center-on-parent</property>
     <property name="default_width">480</property>
     <property name="destroy_with_parent">True</property>
@@ -568,6 +568,7 @@
   </object>
   <object class="GtkDialog" id="player_inspect_dialog">
     <property name="can_focus">False</property>
+    <property name="title" translatable="yes">LTE - Inspect Player Object (for debugging)</property>
     <property name="window_position">center-on-parent</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">main_window</property>
@@ -622,7 +623,7 @@
   </object>
   <object class="GtkFileChooserDialog" id="player_open_filechooser_dialog">
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">Lewd Text Game - Open Profile</property>
+    <property name="title" translatable="yes">LTE - Open Profile</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
@@ -688,7 +689,7 @@
   </object>
   <object class="GtkFileChooserDialog" id="player_save_filechooser_dialog">
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">Lewd Text Game - Save Profile As</property>
+    <property name="title" translatable="yes">LTE - Save Profile As</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
@@ -751,6 +752,90 @@
     <action-widgets>
       <action-widget response="-6">player_save_filechooser_cancel_button</action-widget>
       <action-widget response="-3">player_save_filechooser_save_button</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkListStore" id="player_new_content_liststore"/>
+  <object class="GtkDialog" id="player_new_dialog">
+    <property name="can_focus">False</property>
+    <property name="title" translatable="yes">LTE - New Game</property>
+    <property name="type_hint">dialog</property>
+    <property name="transient_for">main_window</property>
+    <signal name="delete-event" handler="gtk_widget_hide" swapped="no"/>
+    <signal name="response" handler="on_player_new_dialog_response" swapped="no"/>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="player_new_dialog_vbox">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="player_new_dialog_action_area">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="player_new_cancel_button">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="player_new_accept_button">
+                <property name="label" translatable="yes">New Game</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="player_new_choose_content_label">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Content to be included in new game:</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkTreeView" id="player_new_content_treeview">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="model">player_new_content_liststore</property>
+            <child internal-child="selection">
+              <object class="GtkTreeSelection" id="treeview-selection1"/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="-6">player_new_cancel_button</action-widget>
+      <action-widget response="-3">player_new_accept_button</action-widget>
     </action-widgets>
   </object>
 </interface>

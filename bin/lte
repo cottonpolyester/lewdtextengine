@@ -58,24 +58,6 @@ class MainWindow
 		@builder.get_object('battle_stats_damage_value').text = @player.armor.to_s
 	end
 
-	def save_game
-		throw "MainWindow.save_game(): @player and @player_file need to be defined!" if @player.nil? or @player_file.nil?
-
-		File.open(@player_file, 'w') do |pfile|
-			Marshal.dump(@player, pfile)
-			puts "Dumped player object into #@player_file"
-		end
-	end
-
-	def load_game
-		throw "MainWindow.load_game(): @player_file needs to be defined!" if @player_file.nil?
-
-		File.open(@player_file, 'r') do |pfile|
-			@player = Marshal.load(pfile)
-			puts "Loaded player object from #@player_file"
-		end
-	end
-
 	# generic callbacks
 	
 	def gtk_main_quit
@@ -95,21 +77,17 @@ class MainWindow
 	## menu items
 	
 	def on_game_new_menuitem_activate
-		@player = LTE::Player.new("Generic Player", "A perfectly generic player character")
-
-		start_game
+		@builder.get_object('player_new_dialog').show
 	end
 
 	def on_game_open_menuitem_activate
 		@builder.get_object('player_open_filechooser_dialog').show
-
-		start_game
 	end
 
 	def on_game_save_menuitem_activate
 		if @player
 			if @player_file
-				save_player
+				@player.save_to_file(@player_file)
 			else
 				@builder.get_object('player_save_filechooser_dialog').show
 			end
@@ -139,6 +117,22 @@ class MainWindow
 		@builder.get_object('about_dialog').show
 	end
 
+	## player new dialog TODO
+	
+	def on_player_new_dialog_show(widget)
+	end
+
+	def on_player_new_dialog_response(dialog, response)
+		if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
+			dialog.hide
+		end
+
+		if response == Gtk::ResponseType::ACCEPT
+			# do magic with selected content ...
+			start_game
+		end
+	end
+
 	## player open filechooser
 	
 	def on_player_open_filechooser_dialog_show(widget)
@@ -150,12 +144,13 @@ class MainWindow
 	end
 
 	def on_player_open_filechooser_dialog_response(dialog, response)
-		if response == Gtk::ResponseType::CANCEL
+		if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
 			dialog.hide
-		elsif response == Gtk::ResponseType::ACCEPT
-			dialog.hide
-			@player_file = dialog.filename
-			load_player
+		end
+
+		if response == Gtk::ResponseType::ACCEPT
+			@player = Player.load_from_file(@player_file = dialog.filename)
+			start_game
 		end
 	end
 
@@ -171,13 +166,28 @@ class MainWindow
 	end
 
 	def on_player_save_filechooser_dialog_response(dialog, response)
-		if response == Gtk::ResponseType::CANCEL
+		if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
 			dialog.hide
-		elsif response == Gtk::ResponseType::ACCEPT
-			@player_file = dialog.filename
-			dialog.hide
+		end
 
-			save_player
+		if response == Gtk::ResponseType::ACCEPT
+			@player.save_to_file(@player_file = dialog.filename)
+		end
+	end
+
+	## player inspect dialog
+	
+	def on_player_inspect_dialog_response(dialog, response_event)
+		if response_event == Gtk::ResponseType::OK
+			dialog.hide
+		end
+	end
+
+	## no player dialog
+	
+	def on_no_player_dialog_response(dialog, response_event)
+		if response_event == Gtk::ResponseType::OK
+			dialog.hide
 		end
 	end
 
@@ -191,24 +201,8 @@ class MainWindow
 		if response == Gtk::ResponseType::CANCEL
 			dialog.hide
 		elsif response == Gtk::ResponseType::ACCEPT
+			dialog.hide
 			load dialog.filename
-			dialog.hide
-		end
-	end
-
-	## no player dialog
-	
-	def on_no_player_dialog_response(dialog, response_event)
-		if response_event == Gtk::ResponseType::OK
-			dialog.hide
-		end
-	end
-
-	## player inspect dialog
-	
-	def on_player_inspect_dialog_response(dialog, response_event)
-		if response_event == Gtk::ResponseType::OK
-			dialog.hide
 		end
 	end
 end
