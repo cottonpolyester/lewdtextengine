@@ -5,228 +5,237 @@ require 'pp'
 
 require 'lte'
 
-## read command-line arguments (flags)
+module LTE
+        class MainWindow
+                def initialize(config)
+                        @config = config
+                        @game   = nil
+
+                        Gtk.init
+
+                        @builder = Gtk::Builder::new
+                        @builder.add_from_file(@config.resource_dir + '/lte.glade')
+                        @builder.connect_signals { |handler| method(handler) }
+
+                        @builder.get_object('main_window').show
+
+                        Gtk.main
+                end
+
+                def start_game
+                        update_player_stats
+
+                        @builder.get_object('content_label').text = "Hello #{@game.player.name}"
+                end
+
+                def update_player_stats
+                        @builder.get_object('battle_stats_health_label').text = 'HP ' + @game.player.max_health.to_s + ' / ' + @game.player.health.to_s
+
+                        health_bar = @builder.get_object 'battle_stats_health_levelbar'
+                        health_bar.max_value = @game.player.max_health
+                        health_bar.value     = @game.player.health
+
+                        @builder.get_object('battle_stats_manna_label').text = 'MP ' + @game.player.max_manna.to_s + ' / ' + @game.player.manna.to_s
+
+                        manna_bar = @builder.get_object 'battle_stats_manna_levelbar'
+                        manna_bar.max_value = @game.player.max_manna
+                        manna_bar.value     = @game.player.manna
+
+                        @builder.get_object('battle_stats_armor_value').text = @game.player.armor.to_s
+
+                        @builder.get_object('battle_stats_damage_value').text = @game.player.armor.to_s
+                end
+
+                # generic callbacks
+                
+                def gtk_main_quit
+                        Gtk.main_quit
+                end
+
+                def gtk_widget_show(widget, event)
+                        widget.hide
+                end
+
+                def gtk_widget_hide(widget, event)
+                        widget.hide
+                end
+
+                # specific callbacks
+                
+                ## menu items
+                
+                def on_game_new_menuitem_activate
+                        @builder.get_object('game_new_dialog').show
+                end
+
+                def on_game_open_menuitem_activate
+                        @builder.get_object('game_open_filechooser_dialog').show
+                end
+
+                def on_game_save_menuitem_activate
+                        if @game
+                                if @game_save_file
+                                        @game.save_to_file(@game_save_file)
+                                else
+                                        @builder.get_object('game_save_filechooser_dialog').show
+                                end
+                        else
+                                @builder.get_object('no_game_dialog').show
+                        end
+                end
+
+                def on_game_save_as_menuitem_activate
+                        if @game
+                                @builder.get_object('game_save_filechooser_dialog').show
+                        else
+                                @builder.get_object('no_game_dialog').show
+                        end
+                end
+
+                def on_game_inspect_menuitem_activate
+                        @builder.get_object('game_inspect_label').text = @game.pretty_inspect
+                        @builder.get_object('game_inspect_dialog').show
+                end
+
+                def on_content_load_menuitem_activate
+                        @builder.get_object('content_load_filechooser_dialog').show
+                end
+
+                def on_help_about_menuitem_activate
+                        @builder.get_object('about_dialog').show
+                end
+
+                ## game new dialog
+                
+                def on_game_new_dialog_show(widget)
+                        view = @builder.get_object('game_new_content_treeview')
+
+                        treestore = @builder.get_object('content_treestore')
+
+                        LTE.content.each do |c| 
+                                parent = treestore.append(nil)
+                                parent[0] = c.active
+                                parent[1] = c.name
+                                parent[2] = c.description
+                        end
+                end
+
+                def on_content_cellrenderertoggle_toggled(renderer, path)
+                        iter = @builder.get_object('content_treestore').get_iter(path)
+                        iter[0] = (not iter[0])
+                end
+
+                def on_game_new_dialog_response(dialog, response)
+                        if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
+                                dialog.hide
+                        end
+
+                        if response == Gtk::ResponseType::ACCEPT
+                                @builder.get_object('content_treestore').each do |model, path, iter|
+                                        if iter[0] # if include toggle is set
+                                                content = nil
+                                                LTE.content.each { |c| content = c if iter[1] == c.name }
+                                                throw "Content #{iter[1]} not found in LTE.content! Aborting..." unless content
+                                                @game = content.mod_game @game
+                                        end
+                                end
+                                
+                                start_game
+                        end
+                end
+
+                ## game open filechooser
+                
+                def on_game_open_filechooser_dialog_show(widget)
+                        if @game_save_file
+                                widget.filename = File.dirname(@game_save_file)
+                        else
+                                widget.current_folder = @config.config_dir + '/saves/'
+                        end
+                end
+
+                def on_game_open_filechooser_dialog_response(dialog, response)
+                        if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
+                                dialog.hide
+                        end
+
+                        if response == Gtk::ResponseType::ACCEPT
+                                @game = Game.load_from_file(@game_save_file = dialog.filename)
+                                start_game
+                        end
+                end
+
+                ## game save filechooser
+
+                def on_game_save_filechooser_dialog_show(widget)
+                        if @game_save_file
+                                widget.filename = File.dirname(@game_save_file)
+                        else
+                                widget.current_folder = @config.config_dir + '/players/'
+                                widget.current_name   = "#{@game.player.name.downcase.gsub(' ', '_')}.dat"
+                        end
+                end
+
+                def on_game_save_filechooser_dialog_response(dialog, response)
+                        if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
+                                dialog.hide
+                        end
+
+                        if response == Gtk::ResponseType::ACCEPT
+                                @game.save_to_file(@game_save_file = dialog.filename)
+                        end
+                end
+
+                ## game inspect dialog
+                
+                def on_game_inspect_dialog_response(dialog, response_event)
+                        if response_event == Gtk::ResponseType::OK
+                                dialog.hide
+                        end
+                end
+
+                ## no game dialog
+                
+                def on_no_game_dialog_response(dialog, response_event)
+                        if response_event == Gtk::ResponseType::OK
+                                dialog.hide
+                        end
+                end
+
+                ## content load filechooser
+                
+                def on_content_load_filechooser_dialog_show(widget)
+                        widget.current_folder = @config.config_dir
+                end
+
+                def on_content_load_filechooser_dialog_response(dialog, response)
+                        if response == Gtk::ResponseType::CANCEL
+                                dialog.hide
+                        elsif response == Gtk::ResponseType::ACCEPT
+                                dialog.hide
+                                require dialog.filename
+                        end
+                end
+        end
+end
+
+# read command-line arguments (flags)
 
 config = LTE::Config.new
 
 flags = [
-	LTE::Flag.new('',   '--config-dir', 'set config directory (default is $XDG_CONFIG_HOME/lte or ~/.config/lte)', lambda { |dir| config.config_dir = dir} , true, "CONFIG_DIR"),
-	LTE::Flag.new('-v', '--verbose',    'show more output',                                                        lambda { config.verbose = true } ),
-	LTE::Flag.new('-h', '--help',       'show help',                                                               lambda { puts LTE::Flag.gen_help_message(flags); exit 0 } )
+	LTE::Flag.new('',   '--config-dir', 'set config directory (default is $XDG_CONFIG_HOME/lte or ~/.config/lte)',
+                      lambda { |dir| config.config_dir = dir} , true, "config-dir"),
+	LTE::Flag.new('-v', '--verbose', 'show more output',
+                      lambda { config.verbose = true } ),
+	LTE::Flag.new('-h', '--help', 'show help',
+                      lambda { puts LTE::Flag.gen_help_message(flags); exit 0 } ),
+	LTE::Flag.new('-l', '--load', 'list of files to load',
+                      lambda { |files| files.split(',').each { |f| require f } } , true, "file1[,file2...]")
 ]
 
 LTE::Flag.process_all(ARGV, flags)
 
-## start game
+# start game
 
-class MainWindow
-	def initialize(config)
-		@config = config
-
-		Gtk.init
-
-		@builder = Gtk::Builder::new
-		@builder.add_from_file(@config.resource_dir + '/lte.glade')
-		@builder.connect_signals { |handler| method(handler) }
-
-		@builder.get_object('main_window').show
-
-                @content = []
-
-		Gtk.main
-	end
-
-	def start_game
-		update_player_stats
-
-		@builder.get_object('content_label').text = "Hello #{@game.player.name}"
-	end
-
-	def update_player_stats
-		@builder.get_object('battle_stats_health_label').text = 'HP ' + @game.player.max_health.to_s + ' / ' + @game.player.health.to_s
-
-		health_bar = @builder.get_object 'battle_stats_health_levelbar'
-		health_bar.max_value = @game.player.max_health
-		health_bar.value     = @game.player.health
-
-		@builder.get_object('battle_stats_manna_label').text = 'MP ' + @game.player.max_manna.to_s + ' / ' + @game.player.manna.to_s
-
-		manna_bar = @builder.get_object 'battle_stats_manna_levelbar'
-		manna_bar.max_value = @game.player.max_manna
-		manna_bar.value     = @game.player.manna
-
-		@builder.get_object('battle_stats_armor_value').text = @game.player.armor.to_s
-
-		@builder.get_object('battle_stats_damage_value').text = @game.player.armor.to_s
-	end
-
-	# generic callbacks
-	
-	def gtk_main_quit
-		Gtk.main_quit
-	end
-
-	def gtk_widget_show(widget, event)
-		widget.hide
-	end
-
-	def gtk_widget_hide(widget, event)
-		widget.hide
-	end
-
-	# specific callbacks
-	
-	## menu items
-	
-	def on_game_new_menuitem_activate
-		@builder.get_object('game_new_dialog').show
-	end
-
-	def on_game_open_menuitem_activate
-		@builder.get_object('game_open_filechooser_dialog').show
-	end
-
-	def on_game_save_menuitem_activate
-		if @game
-			if @game_save_file
-				@game.save_to_file(@game_save_file)
-			else
-				@builder.get_object('game_save_filechooser_dialog').show
-			end
-		else
-			@builder.get_object('no_game_dialog').show
-		end
-	end
-
-	def on_game_save_as_menuitem_activate
-		if @game
-			@builder.get_object('game_save_filechooser_dialog').show
-		else
-			@builder.get_object('no_game_dialog').show
-		end
-	end
-
-	def on_game_inspect_menuitem_activate
-		@builder.get_object('game_inspect_label').text = @game.pretty_inspect
-		@builder.get_object('game_inspect_dialog').show
-	end
-
-	def on_content_load_menuitem_activate
-		@builder.get_object('content_load_filechooser_dialog').show
-	end
-
-	def on_help_about_menuitem_activate
-		@builder.get_object('about_dialog').show
-	end
-
-	## game new dialog TODO
-	
-	def on_game_new_dialog_show(widget)
-                view = @builder.get_object('game_new_content_treeview')
-
-                tree_store = Gtk::TreeStore.new(TrueClass, String, String, LTE::Content)
-
-                LTE.content.values.each do |c| 
-                        parent = tree_store.append(nil)
-                        parent[0] = c.active
-                        parent[1] = c.name
-                        parent[2] = c.description
-                        parent[3] = c # not shown
-                end
-
-                view.model = tree_store
-                view.append_column Gtk::TreeViewColumn.new("Include",     Gtk::CellRendererToggle.new, :active => 0)
-                view.append_column Gtk::TreeViewColumn.new("Name",        Gtk::CellRendererText.new,   :text => 1)
-                view.append_column Gtk::TreeViewColumn.new("Description", Gtk::CellRendererText.new,   :text => 2)
-	end
-
-	def on_game_new_dialog_response(dialog, response)
-		if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
-			dialog.hide
-		end
-
-		if response == Gtk::ResponseType::ACCEPT
-                        @builder.get_object('game_new_content_treeview').model.each do |model, path, iter|
-                                content = iter[3]
-                                @game = content.mod_game @game if content.active
-                        end
-                        
-			start_game
-		end
-	end
-
-	## game open filechooser
-	
-	def on_game_open_filechooser_dialog_show(widget)
-		if @game_save_file
-			widget.filename = File.dirname(@game_save_file)
-		else
-			widget.current_folder = @config.config_dir + '/saves/'
-		end
-	end
-
-	def on_game_open_filechooser_dialog_response(dialog, response)
-		if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
-			dialog.hide
-		end
-
-		if response == Gtk::ResponseType::ACCEPT
-			@game = Game.load_from_file(@game_save_file = dialog.filename)
-			start_game
-		end
-	end
-
-	## game save filechooser
-
-	def on_game_save_filechooser_dialog_show(widget)
-		if @game_save_file
-			widget.filename = File.dirname(@game_save_file)
-		else
-			widget.current_folder = @config.config_dir + '/players/'
-			widget.current_name   = "#{@game.player.name.downcase.gsub(' ', '_')}.dat"
-		end
-	end
-
-	def on_game_save_filechooser_dialog_response(dialog, response)
-		if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
-			dialog.hide
-		end
-
-		if response == Gtk::ResponseType::ACCEPT
-			@game.save_to_file(@game_save_file = dialog.filename)
-		end
-	end
-
-	## game inspect dialog
-	
-	def on_game_inspect_dialog_response(dialog, response_event)
-		if response_event == Gtk::ResponseType::OK
-			dialog.hide
-		end
-	end
-
-	## no game dialog
-	
-	def on_no_game_dialog_response(dialog, response_event)
-		if response_event == Gtk::ResponseType::OK
-			dialog.hide
-		end
-	end
-
-	## content load filechooser
-	
-	def on_content_load_filechooser_dialog_show(widget)
-		widget.current_folder = @config.config_dir
-	end
-
-	def on_content_load_filechooser_dialog_response(dialog, response)
-		if response == Gtk::ResponseType::CANCEL
-			dialog.hide
-		elsif response == Gtk::ResponseType::ACCEPT
-			dialog.hide
-			load dialog.filename
-		end
-	end
-end
-
-window = MainWindow.new(config)
+window = LTE::MainWindow.new(config)
