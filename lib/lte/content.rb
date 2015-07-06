@@ -8,7 +8,7 @@ module LTE
                         @name = name
                         @description = desc
                         @lambda = l
-                        @active = false
+                        @active = true
 		end
 
 		def mod_game(game)

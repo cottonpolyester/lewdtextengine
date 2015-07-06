@@ -64,45 +64,12 @@ module LTE
                 
                 ## menu items
                 
-                def on_game_new_menuitem_activate
-                        @builder.get_object('game_new_dialog').show
-                end
-
-                def on_game_open_menuitem_activate
-                        @builder.get_object('game_open_filechooser_dialog').show
-                end
-
                 def on_game_save_menuitem_activate
-                        if @game
-                                if @game_save_file
-                                        @game.save_to_file(@game_save_file)
-                                else
-                                        @builder.get_object('game_save_filechooser_dialog').show
-                                end
+                        if @game and @game_save_file
+                                @game.save_to_file(@game_save_file)
                         else
-                                @builder.get_object('no_game_dialog').show
-                        end
-                end
-
-                def on_game_save_as_menuitem_activate
-                        if @game
                                 @builder.get_object('game_save_filechooser_dialog').show
-                        else
-                                @builder.get_object('no_game_dialog').show
                         end
-                end
-
-                def on_game_inspect_menuitem_activate
-                        @builder.get_object('game_inspect_label').text = @game.pretty_inspect
-                        @builder.get_object('game_inspect_dialog').show
-                end
-
-                def on_content_load_menuitem_activate
-                        @builder.get_object('content_load_filechooser_dialog').show
-                end
-
-                def on_help_about_menuitem_activate
-                        @builder.get_object('about_dialog').show
                 end
 
                 ## game new dialog
@@ -168,11 +135,16 @@ module LTE
                 ## game save filechooser
 
                 def on_game_save_filechooser_dialog_show(widget)
-                        if @game_save_file
-                                widget.filename = File.dirname(@game_save_file)
+                        if @game
+                                if @game_save_file
+                                        widget.filename = File.dirname(@game_save_file)
+                                else
+                                        widget.current_folder = @config.config_dir + '/players/'
+                                        widget.current_name   = "#{@game.player.name.downcase.gsub(' ', '_')}.dat"
+                                end
                         else
-                                widget.current_folder = @config.config_dir + '/players/'
-                                widget.current_name   = "#{@game.player.name.downcase.gsub(' ', '_')}.dat"
+                                widget.hide
+                                @builder.get_object('no_game_dialog').show
                         end
                 end
 
@@ -187,6 +159,10 @@ module LTE
                 end
 
                 ## game inspect dialog
+                
+                def on_game_inspect_dialog_show
+                        @builder.get_object('game_inspect_label').text = @game.pretty_inspect
+                end
                 
                 def on_game_inspect_dialog_response(dialog, response_event)
                         if response_event == Gtk::ResponseType::OK
