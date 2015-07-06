@@ -61,37 +61,5 @@ module LTE
 
 			total_damage
 		end
-
-		def ==(other)
-			self.instance_variables.each do |var|
-				self.instance_variable_get(var) == other.instance_variable_get(var)
-			end
-		end
-	end
-
-	class Player < Character
-		attr_accessor :location
-
-		def initialize(name, description = '')
-			super(name, description)
-
-			@location = nil
-		end
-
-		def self.load_from_file(filename)
-			player = nil
-
-			File.open(filename, 'r') do |pfile|
-				player = Marshal.load(pfile)
-			end
-
-			return player
-		end
-
-		def save_to_file(filename)
-			File.open(filename, 'w') do |pfile|
-				Marshal.dump(self, pfile)
-			end
-		end
 	end
 end

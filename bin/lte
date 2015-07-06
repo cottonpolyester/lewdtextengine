@@ -41,21 +41,21 @@ class MainWindow
 	end
 
 	def update_player_stats
-		@builder.get_object('battle_stats_health_label').text = 'HP ' + @player.max_health.to_s + ' / ' + @player.health.to_s
+		@builder.get_object('battle_stats_health_label').text = 'HP ' + @game.player.max_health.to_s + ' / ' + @game.player.health.to_s
 
 		health_bar = @builder.get_object 'battle_stats_health_levelbar'
-		health_bar.max_value = @player.max_health
-		health_bar.value     = @player.health
+		health_bar.max_value = @game.player.max_health
+		health_bar.value     = @game.player.health
 
-		@builder.get_object('battle_stats_manna_label').text = 'MP ' + @player.max_manna.to_s + ' / ' + @player.manna.to_s
+		@builder.get_object('battle_stats_manna_label').text = 'MP ' + @game.player.max_manna.to_s + ' / ' + @game.player.manna.to_s
 
 		manna_bar = @builder.get_object 'battle_stats_manna_levelbar'
-		manna_bar.max_value = @player.max_manna
-		manna_bar.value     = @player.manna
+		manna_bar.max_value = @game.player.max_manna
+		manna_bar.value     = @game.player.manna
 
-		@builder.get_object('battle_stats_armor_value').text = @player.armor.to_s
+		@builder.get_object('battle_stats_armor_value').text = @game.player.armor.to_s
 
-		@builder.get_object('battle_stats_damage_value').text = @player.armor.to_s
+		@builder.get_object('battle_stats_damage_value').text = @game.player.armor.to_s
 	end
 
 	# generic callbacks
@@ -77,36 +77,36 @@ class MainWindow
 	## menu items
 	
 	def on_game_new_menuitem_activate
-		@builder.get_object('player_new_dialog').show
+		@builder.get_object('game_new_dialog').show
 	end
 
 	def on_game_open_menuitem_activate
-		@builder.get_object('player_open_filechooser_dialog').show
+		@builder.get_object('game_open_filechooser_dialog').show
 	end
 
 	def on_game_save_menuitem_activate
-		if @player
-			if @player_file
-				@player.save_to_file(@player_file)
+		if @game
+			if @game_save_file
+				@game.save_to_file(@game_save_file)
 			else
-				@builder.get_object('player_save_filechooser_dialog').show
+				@builder.get_object('game_save_filechooser_dialog').show
 			end
 		else
-			@builder.get_object('no_player_dialog').show
+			@builder.get_object('no_game_dialog').show
 		end
 	end
 
 	def on_game_save_as_menuitem_activate
-		if @player
-			@builder.get_object('player_save_filechooser_dialog').show
+		if @game
+			@builder.get_object('game_save_filechooser_dialog').show
 		else
-			@builder.get_object('no_player_dialog').show
+			@builder.get_object('no_game_dialog').show
 		end
 	end
 
 	def on_game_inspect_menuitem_activate
-		@builder.get_object('player_inspect_label').text = @player.pretty_inspect
-		@builder.get_object('player_inspect_dialog').show
+		@builder.get_object('game_inspect_label').text = @game.pretty_inspect
+		@builder.get_object('game_inspect_dialog').show
 	end
 
 	def on_content_load_menuitem_activate
@@ -117,12 +117,12 @@ class MainWindow
 		@builder.get_object('about_dialog').show
 	end
 
-	## player new dialog TODO
+	## game new dialog TODO
 	
-	def on_player_new_dialog_show(widget)
+	def on_game_new_dialog_show(widget)
 	end
 
-	def on_player_new_dialog_response(dialog, response)
+	def on_game_new_dialog_response(dialog, response)
 		if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
 			dialog.hide
 		end
@@ -133,59 +133,59 @@ class MainWindow
 		end
 	end
 
-	## player open filechooser
+	## game open filechooser
 	
-	def on_player_open_filechooser_dialog_show(widget)
-		if @player_file
-			widget.filename = File.dirname(@player_file)
+	def on_game_open_filechooser_dialog_show(widget)
+		if @game_save_file
+			widget.filename = File.dirname(@game_save_file)
 		else
 			widget.current_folder = @config.config_dir + '/saves/'
 		end
 	end
 
-	def on_player_open_filechooser_dialog_response(dialog, response)
+	def on_game_open_filechooser_dialog_response(dialog, response)
 		if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
 			dialog.hide
 		end
 
 		if response == Gtk::ResponseType::ACCEPT
-			@player = Player.load_from_file(@player_file = dialog.filename)
+			@game = Game.load_from_file(@game_save_file = dialog.filename)
 			start_game
 		end
 	end
 
-	## player save filechooser
+	## game save filechooser
 
-	def on_player_save_filechooser_dialog_show(widget)
-		if @player_file
-			widget.filename = File.dirname(@player_file)
+	def on_game_save_filechooser_dialog_show(widget)
+		if @game_save_file
+			widget.filename = File.dirname(@game_save_file)
 		else
 			widget.current_folder = @config.config_dir + '/players/'
-			widget.current_name   = "#{@player.name.downcase.gsub(' ', '_')}.dat"
+			widget.current_name   = "#{@game.player.name.downcase.gsub(' ', '_')}.dat"
 		end
 	end
 
-	def on_player_save_filechooser_dialog_response(dialog, response)
+	def on_game_save_filechooser_dialog_response(dialog, response)
 		if response == Gtk::ResponseType::CANCEL or response == Gtk::ResponseType::ACCEPT
 			dialog.hide
 		end
 
 		if response == Gtk::ResponseType::ACCEPT
-			@player.save_to_file(@player_file = dialog.filename)
+			@game.save_to_file(@game_save_file = dialog.filename)
 		end
 	end
 
-	## player inspect dialog
+	## game inspect dialog
 	
-	def on_player_inspect_dialog_response(dialog, response_event)
+	def on_game_inspect_dialog_response(dialog, response_event)
 		if response_event == Gtk::ResponseType::OK
 			dialog.hide
 		end
 	end
 
-	## no player dialog
+	## no game dialog
 	
-	def on_no_player_dialog_response(dialog, response_event)
+	def on_no_game_dialog_response(dialog, response_event)
 		if response_event == Gtk::ResponseType::OK
 			dialog.hide
 		end
