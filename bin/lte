@@ -101,9 +101,12 @@ module LTE
                                 @builder.get_object('content_treestore').each do |model, path, iter|
                                         if iter[0] # if include toggle is set
                                                 content = nil
-                                                LTE.content.each { |c| content = c if iter[1] == c.name }
-                                                throw "Content #{iter[1]} not found in LTE.content! Aborting..." unless content
-                                                @game = content.mod_game @game
+
+                                                LTE.content.each do |c|
+                                                        content = c if iter[1] == c.name
+                                                end
+
+                                                @game = content.apply @game
                                         end
                                 end
                                 

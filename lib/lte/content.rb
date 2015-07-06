@@ -4,15 +4,23 @@ module LTE
 	class Content
 		attr_accessor :name, :description, :active
 
-		def initialize(name, desc, l)
-                        @name = name
-                        @description = desc
-                        @lambda = l
+                def self.new_with_block(&block)
+                end
+
+		def initialize(&block)
+                        @name         = ""
+                        @description  = ""
+                        @apply_lambda = lambda { |game| game }
+
+                        instance_exec(&block)
+
                         @active = true
+
+                        pp self
 		end
 
-		def mod_game(game)
-			@lambda.call(game)
+		def apply(game)
+			@apply_lambda.call(game)
 		end
 	end
 
