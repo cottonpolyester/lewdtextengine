@@ -1,5 +1,6 @@
 module LTE
         class Game
+                attr_accessor :player, :location
                 def initialize(starting_player, starting_location)
                         @player   = starting_player
                         @location = starting_location

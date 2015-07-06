@@ -31,13 +31,15 @@ class MainWindow
 
 		@builder.get_object('main_window').show
 
+                @content = []
+
 		Gtk.main
 	end
 
 	def start_game
 		update_player_stats
 
-		@builder.get_object('content_label').text = "Hello world!"
+		@builder.get_object('content_label').text = "Hello #{@game.player.name}"
 	end
 
 	def update_player_stats
@@ -120,6 +122,22 @@ class MainWindow
 	## game new dialog TODO
 	
 	def on_game_new_dialog_show(widget)
+                view = @builder.get_object('game_new_content_treeview')
+
+                tree_store = Gtk::TreeStore.new(TrueClass, String, String, LTE::Content)
+
+                LTE.content.values.each do |c| 
+                        parent = tree_store.append(nil)
+                        parent[0] = c.active
+                        parent[1] = c.name
+                        parent[2] = c.description
+                        parent[3] = c # not shown
+                end
+
+                view.model = tree_store
+                view.append_column Gtk::TreeViewColumn.new("Include",     Gtk::CellRendererToggle.new, :active => 0)
+                view.append_column Gtk::TreeViewColumn.new("Name",        Gtk::CellRendererText.new,   :text => 1)
+                view.append_column Gtk::TreeViewColumn.new("Description", Gtk::CellRendererText.new,   :text => 2)
 	end
 
 	def on_game_new_dialog_response(dialog, response)
@@ -128,7 +146,11 @@ class MainWindow
 		end
 
 		if response == Gtk::ResponseType::ACCEPT
-			# do magic with selected content ...
+                        @builder.get_object('game_new_content_treeview').model.each do |model, path, iter|
+                                content = iter[3]
+                                @game = content.mod_game @game if content.active
+                        end
+                        
 			start_game
 		end
 	end

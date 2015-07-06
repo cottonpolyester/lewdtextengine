@@ -1,36 +1,37 @@
+require 'gtk3'
+
 module LTE
-	@content = {}
+	@@content = {}
 
 	class Content
-		attr_accessor :name :description
+		attr_accessor :name, :description, :active
 
-		def initialize(name, description, player_mod)
-			@name = name
+		def initialize(name, description, game_mod)
+			@name        = name
 			@description = description
+                        @active      = true
 
-			@player_mod_lambda = player_mod
+			@game_mod_lambda = game_mod
 		end
 
-		def mod_player(player)
-			@player_mod_lambda.call(player)
-		end
-	end
-
-	class ContentBase < Content
-		def initialize(name, description, base_player)
-			super(name, description, lambda { |p| base_player } )
+		def mod_game(game)
+			@game_mod_lambda.call(game)
 		end
 	end
 
-	def add_content(content)
-		@content.merge( { content.name => content } )
+        def self.content
+                return @@content
+        end
+
+	def self.add_content(content)
+		@@content[content.name] = content
 	end
 
-	def del_content(content)
-		if @content.respond_to? :name
-			@content.delete(content.name)
+	def self.del_content(content)
+		if @@content.respond_to? :name
+			@@content.delete content.name
 		else
-			@content.delete(content)
+			@@content.delete content
 		end
 	end
 end
