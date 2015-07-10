@@ -15,8 +15,6 @@ module LTE
                         instance_exec(&block)
 
                         @active = true
-
-                        pp self
 		end
 
 		def apply(game)

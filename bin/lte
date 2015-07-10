@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
 require 'gtk3'
 require 'pp'
 
@@ -7,14 +8,44 @@ require 'lte'
 
 module LTE
         class MainWindow
-                def initialize(config)
-                        @config = config
-                        @game   = nil
+                def initialize
+                        @config_dir   = ( ENV['XDG_CONFIG_HOME'].chomp('/') ||
+                                          File.expand_path('~/.config') ) + '/lte'
+                        @resource_dir = File.expand_path('../resources', File.dirname(__FILE__))
+                        @game = nil
+
+                        opt_parser = OptionParser.new do |opts|
+                                opts.banner = "usage: lte [options...]"
+
+                                opts.on("--config-dir DIR", "Search for config files in DIR") do |dir|
+                                        @config_dir = dir
+                                end
+
+                                opts.on("--resource-dir DIR", "Search for resource files in DIR") do |dir|
+                                        @resource_dir = dir
+                                end
+
+                                opts.on("-l", "--load FILE", "Load FILE") do |file|
+                                        load file
+                                end
+
+                                opts.on_tail("-h", "--help", "Show this message") do
+                                        puts opts
+                                        exit
+                                end
+
+                                opts.on_tail("--version", "Show version") do
+                                        puts LTE::Version
+                                        exit
+                                end
+                        end
+
+                        opt_parser.parse! ARGV
 
                         Gtk.init
 
                         @builder = Gtk::Builder::new
-                        @builder.add_from_file(@config.resource_dir + '/lte.glade')
+                        @builder.add_from_file(@resource_dir + '/lte.glade')
                         @builder.connect_signals { |handler| method(handler) }
 
                         @builder.get_object('main_window').show
@@ -75,9 +106,9 @@ module LTE
                 ## game new dialog
                 
                 def on_game_new_dialog_show(widget)
-                        view = @builder.get_object('game_new_content_treeview')
-
                         treestore = @builder.get_object('content_treestore')
+
+                        treestore.clear
 
                         LTE.content.each do |c| 
                                 parent = treestore.append(nil)
@@ -120,7 +151,7 @@ module LTE
                         if @game_save_file
                                 widget.filename = File.dirname(@game_save_file)
                         else
-                                widget.current_folder = @config.config_dir + '/saves/'
+                                widget.current_folder = @config_dir + '/saves/'
                         end
                 end
 
@@ -142,7 +173,7 @@ module LTE
                                 if @game_save_file
                                         widget.filename = File.dirname(@game_save_file)
                                 else
-                                        widget.current_folder = @config.config_dir + '/players/'
+                                        widget.current_folder = @config_dir + '/players/'
                                         widget.current_name   = "#{@game.player.name.downcase.gsub(' ', '_')}.dat"
                                 end
                         else
@@ -184,7 +215,7 @@ module LTE
                 ## content load filechooser
                 
                 def on_content_load_filechooser_dialog_show(widget)
-                        widget.current_folder = @config.config_dir
+                        widget.current_folder = @config_dir
                 end
 
                 def on_content_load_filechooser_dialog_response(dialog, response)
@@ -198,23 +229,4 @@ module LTE
         end
 end
 
-# read command-line arguments (flags)
-
-config = LTE::Config.new
-
-flags = [
-	LTE::Flag.new('',   '--config-dir', 'set config directory (default is $XDG_CONFIG_HOME/lte or ~/.config/lte)',
-                      lambda { |dir| config.config_dir = dir} , true, "config-dir"),
-	LTE::Flag.new('-v', '--verbose', 'show more output',
-                      lambda { config.verbose = true } ),
-	LTE::Flag.new('-h', '--help', 'show help',
-                      lambda { puts LTE::Flag.gen_help_message(flags); exit 0 } ),
-	LTE::Flag.new('-l', '--load', 'list of files to load',
-                      lambda { |files| files.split(',').each { |f| require f } } , true, "file1[,file2...]")
-]
-
-LTE::Flag.process_all(ARGV, flags)
-
-# start game
-
-window = LTE::MainWindow.new(config)
+window = LTE::MainWindow.new
